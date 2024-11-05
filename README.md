@@ -9,30 +9,6 @@ Ports used in the project:
 |-------------- | -------------- |
 | **nginx** | 8080 |
 
-## Use
-
-```dotenv
-# .env
-DB_CONNECTION=pgsql
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_DATABASE=app
-DB_USERNAME=usuario
-DB_PASSWORD=senha
-DB_ROOT_PASSWORD=senharoot
-```
-
-```dotenv
-# app/.env
-DB_CONNECTION=pgsql
-DB_HOST=pgsql
-DB_PORT=5432
-DB_DATABASE=app
-DB_USERNAME=usuario
-DB_PASSWORD=senha
-DB_ROOT_PASSWORD=senharoot
-```
-
 3. Build the project whit the next commands:
 
 ```sh
