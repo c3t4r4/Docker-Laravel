@@ -1,8 +1,6 @@
-# Workflow
 services:
   nginx:
     image: c3t4r4/laravel:nginx
-    container_name: nginx
     ports:
       - "8080:80"
     volumes:
@@ -15,8 +13,6 @@ services:
 
   pgsql:
     image: postgres:latest
-    container_name: pgsql
-    restart: unless-stopped
     tty: true
     environment:
       POSTGRES_USER: ${DB_USERNAME}
@@ -36,14 +32,12 @@ services:
 
   redis:
     image: "redis:alpine"
-    container_name: redis
     restart: unless-stopped
     networks:
       - laravel
 
   php:
     image: c3t4r4/laravel:php-8.2
-    container_name: php
     volumes:
       - app_data:/var/www/html:delegated
     networks:
@@ -51,7 +45,6 @@ services:
 
   composer:
     image: c3t4r4/laravel:composer
-    container_name: composer
     volumes:
       - app_data:/var/www/html
     working_dir: /var/www/html
@@ -64,7 +57,6 @@ services:
 
   npm:
     image: node:lts
-    container_name: npm
     volumes:
       - app_data:/var/www/html
     working_dir: /var/www/html
@@ -72,7 +64,6 @@ services:
 
   artisan:
     image: c3t4r4/laravel:php-8.2
-    container_name: artisan
     volumes:
       - app_data:/var/www/html:delegated
     depends_on:
@@ -83,21 +74,19 @@ services:
     networks:
       - laravel
 
-  # Serviço para clonar o repositório no volume
   init-app:
-    image: alpine/git # Usa uma imagem leve com Git
-    container_name: init-app
+    image: alpine/git
     volumes:
-      - app_data:/git-destination # Clona o repositório para o volume
+      - app_data:/git-destination
     environment:
       DB_CONNECTION: ${DB_CONNECTION}
-      DB_HOST: ${DB_HOST_APP}
-      DB_PORT: ${DB_PORT}
       DB_DATABASE: ${DB_DATABASE}
-      DB_USERNAME: ${DB_USERNAME}
+      DB_HOST: ${DB_HOST_APP}
       DB_PASSWORD: ${DB_PASSWORD}
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USERNAME}
       GIT_REP: ${GIT_REP}
-      GIT_TOKEN: ${GIT_TOKEN:-} # Token opcional para repositórios privados
+      GIT_TOKEN: ${GIT_TOKEN:-}
     entrypoint: /bin/sh -c "
       if [ -n \"$$GIT_TOKEN\" ] && [ \"$$GIT_TOKEN\" != \"\" ]; then
       GIT_REP=\"https://${GIT_TOKEN}@$${GIT_REP#https://}\"
