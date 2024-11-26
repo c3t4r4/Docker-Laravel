@@ -25,8 +25,6 @@ services:
       - postgres
       - -c
       - listen_addresses='*'
-      - -c
-      - "host all ${DB_USERNAME} 0.0.0.0/0 scram-sha-256"
     networks:
       - laravel
 
@@ -38,6 +36,9 @@ services:
 
   php:
     image: c3t4r4/laravel:php-8.2
+    environment:
+      - USER_ID=${USER_ID}
+      - GROUP_ID=${GROUP_ID}
     volumes:
       - app_data:/var/www/html:delegated
     networks:
@@ -45,60 +46,88 @@ services:
 
   composer:
     image: c3t4r4/laravel:composer
+    environment:
+      - USER_ID=${USER_ID}
+      - GROUP_ID=${GROUP_ID}
     volumes:
       - app_data:/var/www/html
     working_dir: /var/www/html
     depends_on:
       - php
-    user: laravel
+    user: "${USER_ID}:${GROUP_ID}"
     networks:
       - laravel
-    entrypoint: ["composer", "--ignore-platform-reqs"]
+    entrypoint:
+      [
+        "/bin/sh",
+        "-c",
+        "composer install && composer dump-autoload && tail -f /dev/null",
+      ]
 
   npm:
     image: node:lts
+    environment:
+      - USER_ID=${USER_ID}
+      - GROUP_ID=${GROUP_ID}
     volumes:
       - app_data:/var/www/html
+    depends_on:
+      - composer
     working_dir: /var/www/html
-    entrypoint: ["npm"]
+    user: "${USER_ID}:${GROUP_ID}"
+    networks:
+      - laravel
+    entrypoint:
+      ["/bin/sh", "-c", "npm install && npm run build && tail -f /dev/null"]
 
   artisan:
     image: c3t4r4/laravel:php-8.2
+    environment:
+      - USER_ID=${USER_ID}
+      - GROUP_ID=${GROUP_ID}
     volumes:
       - app_data:/var/www/html:delegated
     depends_on:
       - pgsql
+      - composer
     working_dir: /var/www/html
-    user: laravel
-    entrypoint: ["php", "/var/www/html/artisan"]
+    user: "${USER_ID}:${GROUP_ID}"
     networks:
       - laravel
+    entrypoint: ["/bin/sh", "-c", "php artisan migrate && php artisan optimize"]
 
   init-app:
     image: alpine/git
     volumes:
       - app_data:/git-destination
     environment:
+      USER_ID: ${USER_ID}
+      GROUP_ID: ${GROUP_ID}
       DB_CONNECTION: ${DB_CONNECTION}
-      DB_DATABASE: ${DB_DATABASE}
       DB_HOST: ${DB_HOST_APP}
-      DB_PASSWORD: ${DB_PASSWORD}
       DB_PORT: ${DB_PORT}
+      DB_DATABASE: ${DB_DATABASE}
       DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
       GIT_REP: ${GIT_REP}
       GIT_TOKEN: ${GIT_TOKEN:-}
     entrypoint: /bin/sh -c "
-      if [ -n \"$$GIT_TOKEN\" ] && [ \"$$GIT_TOKEN\" != \"\" ]; then
-      GIT_REP=\"https://${GIT_TOKEN}@$${GIT_REP#https://}\"
-      fi && \
-      git clone $$GIT_REP /git-destination || true && \
-      cp /git-destination/.env.example /git-destination/.env && \
-      sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=$$DB_CONNECTION/' /git-destination/.env && \
-      sed -i 's/^DB_HOST=.*/DB_HOST=$$DB_HOST/' /git-destination/.env && \
-      sed -i 's/^DB_PORT=.*/DB_PORT=$$DB_PORT/' /git-destination/.env && \
-      sed -i 's/^DB_DATABASE=.*/DB_DATABASE=$$DB_DATABASE/' /git-destination/.env && \
-      sed -i 's/^DB_USERNAME=.*/DB_USERNAME=$$DB_USERNAME/' /git-destination/.env && \
+      GIT_REP=\"https://$$GIT_TOKEN@$${GIT_REP#https://}\";
+      git clone $$GIT_REP /git-destination || true
+      cd /git-destination
+      cp .env.example .env
+      chown -R www-data:www-data *
+      find . -type f -exec chmod 0644 {} \
+      find . -type d -exec chmod 0755 {} \
+      chmod -R ug+rwx storage bootstrap/cache
+      chmod -R 774 storage/
+      sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=$$DB_CONNECTION/' /git-destination/.env
+      sed -i 's/^DB_HOST=.*/DB_HOST=$$DB_HOST_APP/' /git-destination/.env
+      sed -i 's/^DB_PORT=.*/DB_PORT=$$DB_PORT/' /git-destination/.env
+      sed -i 's/^DB_DATABASE=.*/DB_DATABASE=$$DB_DATABASE/' /git-destination/.env
+      sed -i 's/^DB_USERNAME=.*/DB_USERNAME=$$DB_USERNAME/' /git-destination/.env
       sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=$$DB_PASSWORD/' /git-destination/.env"
+    user: "${USER_ID}:${GROUP_ID}"
     networks:
       - laravel
 
@@ -109,3 +138,4 @@ volumes:
 networks:
   laravel:
     driver: overlay
+    attachable: true
