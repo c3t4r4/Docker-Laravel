@@ -1,62 +1,13 @@
-# Docker - Laravel - PHP 8.2
+# Docker - Laravel
 
-Stack to Docker Swarm
+rm -rf /var/www/app/public && git clone https://<seu_token>@github.com/usuario/repositorio.git /var/www/app
 
-## Ports
+rm -rf /var/www/app/public && git clone https://ghp_abc123456789xyz@github.com/meusuario/meurepositorio.git /var/www/app
 
-Ports used in the project:
-| Software | Port |
-|-------------- | -------------- |
-| **nginx** | 8080 |
+chown www-data:www-data /var/www/app/storage && chown www-data:www-data /var/www/app/logs
 
-3. Build the project whit the next commands:
+cd /var/www/app && composer install && npm install && npm run build
 
-```sh
-docker-compose up -d
-```
+cd /var/www/app && nano .env
 
-4. Install Dependency:
-
-```sh
-docker-compose run --rm composer install && docker-compose run --rm npm install && docker-compose run --rm npm run prod
-```
-
-5. Generate Key:
-
-```sh
-docker-compose run --rm artisan key:generate && docker-compose run --rm artisan optimize
-```
-
-6. Run Migrate and Seed:
-
-```sh
-docker-compose run --rm artisan migrate:fresh --seed
-```
-
----
-
-## Special Cases
-
-To Down and remove the volumes we use the next command:
-
-```sh
-docker-compose down -v
-```
-
-Update Composer:
-
-```sh
-docker-compose run --rm composer update
-```
-
-Run compiler (Webpack.mix.js) or Show the view compiler in node:
-
-```sh
-docker-compose run --rm npm run dev
-```
-
-Run all migrations:
-
-```sh
-docker-compose run --rm artisan migrate
-```
+cd /var/www/app && php artisan key:generate && php artisan migrate && php artisan optimize

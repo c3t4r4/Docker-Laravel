@@ -1,0 +1,52 @@
+# docker-compose.yml
+services:
+  app:
+    # build: laravel11/
+    image: c3t4r4/laravel:laravel-11
+    container_name: laravel
+    ports:
+      - "80:80"
+    volumes:
+      - laravel-app-volume:/var/www/app
+    networks:
+      - laravel
+
+  pgsql:
+    image: postgres:17
+    container_name: pgsql
+    restart: unless-stopped
+    tty: true
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+      TZ: America/Sao_Paulo
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    command:
+      - postgres
+      - -c
+      - listen_addresses=*
+    networks:
+      - laravel
+
+  redis:
+    image: "redis:alpine"
+    container_name: redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - laravel
+
+volumes:
+  laravel-app-volume:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  laravel:
+    driver: bridge
