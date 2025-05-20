@@ -4,8 +4,7 @@ rm -rf /var/www/app/public && git clone https://<seu_token>@github.com/usuario/r
 
 rm -rf /var/www/app/public && git clone https://ghp_abc123456789xyz@github.com/meusuario/meurepositorio.git /var/www/app
 
-chown -R www-data:www-data /var/www/app/storage/\* && chown -R www-data:www-data /var/www/app/bootstrap/cache
-chown www-data:www-data /var/www/app/storage && chown www-data:www-data /var/www/app/storage/logs && chown www-data:www-data /var/www/app/storage/framework
+chown -R www-data:www-data /var/www/app/storage/\* && chown -R www-data:www-data /var/www/app/bootstrap/cache && chown www-data:www-data /var/www/app/storage/logs && chown www-data:www-data /var/www/app/storage/framework
 
 cd /var/www/app && composer install && npm install && npm run build
 
