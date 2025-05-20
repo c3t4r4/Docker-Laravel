@@ -1,6 +1,6 @@
 services:
   app:
-    image: c3t4r4/laravel:laravel-11
+    image: c3t4r4/laravel:laravel-9
     ports:
       - "80:80"
     volumes:
