@@ -14,10 +14,10 @@ cd /var/www/app && composer install && npm install && npm run build
 cp /var/www/app/.env.example /var/www/app/.env && nano .env
 ```
 ```sh
-cd /var/www/app && php artisan key:generate && php artisan migrate && php artisan optimize && php artisan view:cache
+cd /var/www/app && php artisan key:generate && php artisan migrate && php artisan optimize
 ```
 ```sh
-chown -R www-data:www-data /var/www/app/storage/* && chown -R www-data:www-data /var/www/app/bootstrap/cache && chown -R www-data:www-data /var/www/app/view
+chown -R www-data:www-data /var/www/app/storage/* && chown -R www-data:www-data /var/www/app/bootstrap/cache
 ```
 
 ## Por fim
