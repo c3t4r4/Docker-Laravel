@@ -1,0 +1,64 @@
+services:
+  app:
+    image: c3t4r4/laravel:laravel-12
+    working_dir: /var/www/app
+    #ports:
+    #  - "80:80"
+    volumes:
+      - spmobile_laravel:/var/www/app
+    depends_on:
+      - pgsql
+      - redis
+
+  app-worker:
+    image: c3t4r4/laravel:laravel-12
+    working_dir: /var/www/app
+    command: php artisan queue:work --timeout=0
+    volumes:
+      - spmobile_laravel:/var/www/app
+    depends_on:
+      - pgsql
+      - redis
+      - app
+
+  app-scheduler:
+    image: c3t4r4/laravel:laravel-12
+    working_dir: /var/www/app
+    command: bash -c 'while true; do php artisan schedule:run --no-interaction; sleep 60; done'
+    volumes:
+      - spmobile_laravel:/var/www/app
+    depends_on:
+      - pgsql
+      - redis
+      - app
+
+  pgsql:
+    image: postgres:17
+    restart: unless-stopped
+    tty: true
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+      TZ: America/Sao_Paulo
+      POSTGRES_INITDB_ARGS: "--locale=en_US.UTF-8"
+    volumes:
+      - spmobile_postgres:/var/lib/postgresql/data
+    command:
+      - postgres
+      - -c
+      - listen_addresses=*
+
+  redis:
+    image: "redis:alpine"
+    restart: unless-stopped
+    volumes:
+      - spmobile_redis:/data
+
+volumes:
+  spmobile_laravel:
+    name: spmobile_laravel
+  spmobile_postgres:
+    name: spmobile_postgres
+  spmobile_redis:
+    name: spmobile_redis
