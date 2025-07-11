@@ -3,7 +3,7 @@ services:
     image: c3t4r4/laravel:laravel-12
     working_dir: /var/www/app
     healthcheck:
-      test: "wget -qO- http://localhost:80/ping || exit 1"
+      test: "wget -qO- http://localhost || exit 1"
       interval: 4s
       timeout: 2s
       retries: 5
@@ -19,7 +19,7 @@ services:
     image: c3t4r4/laravel:laravel-12
     working_dir: /var/www/app
     healthcheck:
-      test: "wget -qO- http://localhost:80/ping || exit 1"
+      test: "wget -qO- http://localhost || exit 1"
       interval: 4s
       timeout: 2s
       retries: 5
@@ -35,7 +35,7 @@ services:
     image: c3t4r4/laravel:laravel-12
     working_dir: /var/www/app
     healthcheck:
-      test: "wget -qO- http://localhost:80/ping || exit 1"
+      test: "wget -qO- http://localhost || exit 1"
       interval: 4s
       timeout: 2s
       retries: 5
