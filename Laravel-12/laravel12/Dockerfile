@@ -28,7 +28,8 @@ RUN apt update && apt dist-upgrade -y && apt autoremove -y && apt install -y \
     fonts-powerline \
     imagemagick \
     libmagickwand-dev \
-    libmagickcore-dev
+    libmagickcore-dev \
+    wormhole
 
 # Adicionar repositório PHP e instalar PHP 8.4 com extensões necessárias para Laravel
 RUN add-apt-repository ppa:ondrej/php && \
