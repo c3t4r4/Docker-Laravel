@@ -19,6 +19,10 @@ cd /var/www/app && php artisan key:generate && php artisan migrate && php artisa
 ```sh
 chown -R www-data:www-data /var/www/app/storage/* && chown -R www-data:www-data /var/www/app/bootstrap/cache
 ```
+## Fazer Pull e Atualizar
+```sh
+cd /var/www/app && git pull && composer install && npm install && npm run build && php artisan migrate && php artisan optimize && chown -R www-data:www-data /var/www/app/storage/* && chown -R www-data:www-data /var/www/app/bootstrap/cache
+```
 
 ## Por fim
 
