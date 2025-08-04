@@ -45,10 +45,14 @@ wormhole \
 zip \
 zsh
 
-# Instalar PHP 8.4 Repositorio
+# Instalar Repositorios
 RUN  mkdir -p /etc/apt/keyrings \
 && curl -sS 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xb8dc7e53946656efbce4c1dd71daeaab4ad4cab6' | gpg --dearmor | tee /etc/apt/keyrings/ppa_ondrej_php.gpg > /dev/null \
 && echo "deb [signed-by=/etc/apt/keyrings/ppa_ondrej_php.gpg] https://ppa.launchpadcontent.net/ondrej/php/ubuntu noble main" > /etc/apt/sources.list.d/ppa_ondrej_php.list \
+&& curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor | tee /etc/apt/keyrings/yarn.gpg >/dev/null \
+&& echo "deb [signed-by=/etc/apt/keyrings/yarn.gpg] https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list \
+&& curl -sS https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | tee /etc/apt/keyrings/pgdg.gpg >/dev/null \
+&& echo "deb [signed-by=/etc/apt/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt noble-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
 && apt update
 
 # Instalar PHP 8.4 com extensões necessárias para Laravel
@@ -82,7 +86,10 @@ RUN apt install -y --no-install-recommends \
     php8.4-swoole \
     php8.4-zip \
     php8.4-xml \
-    php8.4-xdebug
+    php8.4-xdebug \
+    yarn \
+    $MYSQL_CLIENT \
+    postgresql-client-$POSTGRES_VERSION
 
 # Instalar Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -99,20 +106,13 @@ RUN update-alternatives --set php /usr/bin/php8.4 && \
 
 # Instalar Node.js LTS e npm
 RUN curl -fsSL https://deb.nodesource.com/setup_$NODE_VERSION.x | bash - \
-    && apt-get install -y nodejs \
+    && apt install -y nodejs \
     && npm install -g npm@latest \
     && npm install -g pnpm \
-    && npm install -g bun \
-    && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor | tee /etc/apt/keyrings/yarn.gpg >/dev/null \
-    && echo "deb [signed-by=/etc/apt/keyrings/yarn.gpg] https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list \
-    && apt update && apt install yarn -y
+    && npm install -g bun
 
-# Instalar Postgresql Client and Mysql Client
-RUN curl -sS https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | tee /etc/apt/keyrings/pgdg.gpg >/dev/null \
-&& echo "deb [signed-by=/etc/apt/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt noble-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
-&& apt update && apt install $MYSQL_CLIENTpostgresql-client-$POSTGRES_VERSION -y \
-&& apt-get -y autoremove \
-&& apt-get clean \
+# Limpar cache
+RUN apt clean \
 && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Configurar ZSH como shell padrão
