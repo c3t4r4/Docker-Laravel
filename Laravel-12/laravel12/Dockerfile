@@ -113,12 +113,26 @@ SHELL ["/bin/zsh", "-c"]
 COPY nginx.conf /etc/nginx/sites-available/default
 
 # Configurar PHP-FPM
-RUN sed -i 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g' /etc/php/8.4/fpm/php.ini
+COPY php.ini /etc/php/8.4/fpm/php.ini
 
-# Adicionar extensão Imagick ao PHP.ini se não existir
-RUN if ! grep -q "^extension=imagick.so" /etc/php/8.4/fpm/php.ini; then \
-    echo "extension=imagick.so" >> /etc/php/8.4/fpm/php.ini; \
-fi
+# # Configurar PHP-FPM
+# RUN sed -i 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g' /etc/php/8.4/fpm/php.ini
+# RUN sed -i 's/;error_log = php_errors.log/error_log=\/var\/log\/php_errors.log/g' /etc/php/8.4/fpm/php.ini
+# RUN sed -i 's/;max_execution_time = 30/max_execution_time = 120/g' /etc/php/8.4/fpm/php.ini
+# RUN sed -i 's/;post_max_size = 8M/post_max_size = 512M/g' /etc/php/8.4/fpm/php.ini
+# RUN sed -i 's/;opcache.enable=1/opcache.enable=1/g' /etc/php/8.4/fpm/php.ini
+# RUN sed -i 's/;opcache.memory_consumption=128/opcache.memory_consumption=512/g' /etc/php/8.4/fpm/php.ini
+# RUN sed -i 's/;opcache.validate_timestamps=1/opcache.validate_timestamps=0/g' /etc/php/8.4/fpm/php.ini
+# RUN sed -i 's/;max_input_time = 60/max_input_time = 120/g' /etc/php/8.4/fpm/php.ini
+# RUN sed -i 's/;memory_limit = 128M/memory_limit = 512M/g' /etc/php/8.4/fpm/php.ini
+# RUN sed -i 's/;upload_max_filesize = 2M/upload_max_filesize = 512M/g' /etc/php/8.4/fpm/php.ini
+# RUN sed -i 's/;max_input_vars = 1000/max_input_vars = 1500/g' /etc/php/8.4/fpm/php.ini
+
+
+# # Adicionar extensão Imagick ao PHP.ini se não existir
+# RUN if ! grep -q "^extension=imagick.so" /etc/php/8.4/fpm/php.ini; then \
+#     echo "extension=imagick.so" >> /etc/php/8.4/fpm/php.ini; \
+# fi
 
 
 # Configurar permissões
