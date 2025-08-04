@@ -3,6 +3,9 @@ FROM ubuntu:24.04
 
 # Evitar interações durante a instalação
 ENV DEBIAN_FRONTEND=noninteractive
+ARG NODE_VERSION=22
+ARG MYSQL_CLIENT="mysql-client"
+ARG POSTGRES_VERSION=17
 
 # Configurar timezone
 ENV TZ=America/Sao_Paulo
@@ -10,61 +13,76 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Atualizar sistema e instalar dependências básicas
 RUN apt update && apt dist-upgrade -y && apt autoremove -y && apt install -y \
-    software-properties-common \
-    curl \
-    git \
-    nginx \
-    nano \
-    zip \
-    unzip \
-    supervisor \
-    acl \
-    htop \
-    btop \
-    ncdu \
-    zsh \
-    wget \
-    make \
-    fonts-powerline \
-    imagemagick \
-    libmagickwand-dev \
-    libmagickcore-dev \
-    wormhole
+acl \
+btop \
+ca-certificates \
+curl \
+dnsutils \
+ffmpeg \
+fonts-powerline \
+fswatch \
+git \
+gnupg \
+gosu \
+htop \
+imagemagick \
+libcap2-bin \
+libmagickcore-dev \
+libmagickwand-dev \
+libpng-dev \
+librsvg2-bin \
+make \
+nano \
+ncdu \
+nginx \
+python3 \
+software-properties-common \
+sqlite3 \
+supervisor \
+unzip \
+wget \
+wormhole \
+zip \
+zsh
 
-# Adicionar repositório PHP e instalar PHP 8.4 com extensões necessárias para Laravel
-RUN add-apt-repository ppa:ondrej/php && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
+# Instalar PHP 8.4 Repositorio
+RUN  mkdir -p /etc/apt/keyrings \
+&& curl -sS 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xb8dc7e53946656efbce4c1dd71daeaab4ad4cab6' | gpg --dearmor | tee /etc/apt/keyrings/ppa_ondrej_php.gpg > /dev/null \
+&& echo "deb [signed-by=/etc/apt/keyrings/ppa_ondrej_php.gpg] https://ppa.launchpadcontent.net/ondrej/php/ubuntu noble main" > /etc/apt/sources.list.d/ppa_ondrej_php.list \
+&& apt update
+
+# Instalar PHP 8.4 com extensões necessárias para Laravel
+RUN apt install -y --no-install-recommends \
     php8.4 \
-    php8.4-fpm \
+    php8.4-bcmath \
     php8.4-cli \
     php8.4-common \
-    php8.4-mysql \
-    php8.4-zip \
-    php8.4-gd \
-    php8.4-mbstring \
     php8.4-curl \
-    php8.4-xml \
-    php8.4-bcmath \
-    php8.4-intl \
-    php8.4-readline \
-    php8.4-soap \
-    php8.4-gmp \
-    php8.4-pgsql \
-    php8.4-imagick \
-    php8.4-sqlite3 \
     php8.4-dev \
+    php8.4-fpm \
+    php8.4-gd \
+    php8.4-gmp \
+    php8.4-igbinary \
+    php8.4-imagick \
+    php8.4-imap \
+    php8.4-intl \
+    php8.4-ldap \
+    php8.4-mbstring \
+    php8.4-memcached \
+    php8.4-mongodb \
+    php8.4-msgpack \
+    php8.4-mysql \
+    php8.4-pcov \
     php-pear \
-    && pecl install redis \
-    && echo "extension=redis.so" > /etc/php/8.4/mods-available/redis.ini \
-    && phpenmod redis
-
-# Instalar Imagick
-RUN git clone https://github.com/Imagick/imagick --depth 1 /tmp/imagick \
-    && cd /tmp/imagick \
-    && phpize && ./configure \
-    && make \
-    && make install
+    php8.4-pgsql \
+    php8.4-readline \
+    php8.4-redis \
+    php8.4-soap \
+    php8.4-sqlite3 \
+    php8.4-swoole \
+    php8.4-zip \
+    php8.4-xml \
+    php8.4-xdebug
 
 # Instalar Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -80,11 +98,22 @@ RUN update-alternatives --set php /usr/bin/php8.4 && \
     update-alternatives --set php-config /usr/bin/php-config8.4
 
 # Instalar Node.js LTS e npm
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+RUN curl -fsSL https://deb.nodesource.com/setup_$NODE_VERSION.x | bash - \
     && apt-get install -y nodejs \
     && npm install -g npm@latest \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && npm install -g pnpm \
+    && npm install -g bun \
+    && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor | tee /etc/apt/keyrings/yarn.gpg >/dev/null \
+    && echo "deb [signed-by=/etc/apt/keyrings/yarn.gpg] https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list \
+    && apt update && apt install yarn -y
+
+# Instalar Postgresql Client and Mysql Client
+RUN curl -sS https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | tee /etc/apt/keyrings/pgdg.gpg >/dev/null \
+&& echo "deb [signed-by=/etc/apt/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt noble-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+&& apt update && apt install $MYSQL_CLIENTpostgresql-client-$POSTGRES_VERSION -y \
+&& apt-get -y autoremove \
+&& apt-get clean \
+&& rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Configurar ZSH como shell padrão
 RUN chsh -s $(which zsh)
@@ -115,25 +144,6 @@ COPY nginx.conf /etc/nginx/sites-available/default
 # Configurar PHP-FPM
 COPY php.ini /etc/php/8.4/fpm/php.ini
 
-# # Configurar PHP-FPM
-# RUN sed -i 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g' /etc/php/8.4/fpm/php.ini
-# RUN sed -i 's/;error_log = php_errors.log/error_log=\/var\/log\/php_errors.log/g' /etc/php/8.4/fpm/php.ini
-# RUN sed -i 's/;max_execution_time = 30/max_execution_time = 120/g' /etc/php/8.4/fpm/php.ini
-# RUN sed -i 's/;post_max_size = 8M/post_max_size = 512M/g' /etc/php/8.4/fpm/php.ini
-# RUN sed -i 's/;opcache.enable=1/opcache.enable=1/g' /etc/php/8.4/fpm/php.ini
-# RUN sed -i 's/;opcache.memory_consumption=128/opcache.memory_consumption=512/g' /etc/php/8.4/fpm/php.ini
-# RUN sed -i 's/;opcache.validate_timestamps=1/opcache.validate_timestamps=0/g' /etc/php/8.4/fpm/php.ini
-# RUN sed -i 's/;max_input_time = 60/max_input_time = 120/g' /etc/php/8.4/fpm/php.ini
-# RUN sed -i 's/;memory_limit = 128M/memory_limit = 512M/g' /etc/php/8.4/fpm/php.ini
-# RUN sed -i 's/;upload_max_filesize = 2M/upload_max_filesize = 512M/g' /etc/php/8.4/fpm/php.ini
-# RUN sed -i 's/;max_input_vars = 1000/max_input_vars = 1500/g' /etc/php/8.4/fpm/php.ini
-
-
-# # Adicionar extensão Imagick ao PHP.ini se não existir
-# RUN if ! grep -q "^extension=imagick.so" /etc/php/8.4/fpm/php.ini; then \
-#     echo "extension=imagick.so" >> /etc/php/8.4/fpm/php.ini; \
-# fi
-
 
 # Configurar permissões
 RUN mkdir -p /var/run/php && \
@@ -145,7 +155,7 @@ RUN mkdir -p /var/run/php && \
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Expor porta 80
-EXPOSE 80
+EXPOSE 80/tcp
 
 # Comando para iniciar serviços
 CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
