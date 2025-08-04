@@ -11,6 +11,12 @@ ARG POSTGRES_VERSION=17
 ENV TZ=America/Sao_Paulo
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
+# Criar usuário laravel
+ENV SUPERVISOR_PHP_USER="laravel"
+ENV WWWUSER=1200
+RUN useradd -ms /bin/zsh --no-user-group -g www-data -u $WWWUSER $SUPERVISOR_PHP_USER
+
+
 # Atualizar sistema e instalar dependências básicas
 RUN apt update && apt dist-upgrade -y && apt autoremove -y && apt install -y \
 acl \
@@ -131,8 +137,6 @@ RUN sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highligh
 RUN echo "export PATH=\"\$PATH:/usr/local/bin\"" >> ~/.zshrc && \
     echo "export COMPOSER_ALLOW_SUPERUSER=1" >> ~/.zshrc
 
-RUN useradd -ms /bin/zsh --no-user-group -g www-data -u 1200 laravel
-
 # Criar diretório de trabalho
 WORKDIR /var/www/html
 
@@ -144,6 +148,7 @@ COPY nginx.conf /etc/nginx/sites-available/default
 
 # Configurar PHP-FPM
 COPY php.ini /etc/php/8.4/fpm/php.ini
+COPY www.conf /etc/php/8.4/fpm/pool.d/www.conf
 
 
 # Configurar permissões
