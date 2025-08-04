@@ -86,7 +86,6 @@ RUN apt install -y --no-install-recommends \
     php8.4-swoole \
     php8.4-zip \
     php8.4-xml \
-    php8.4-xdebug \
     yarn \
     $MYSQL_CLIENT \
     postgresql-client-$POSTGRES_VERSION
@@ -132,6 +131,8 @@ RUN sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highligh
 RUN echo "export PATH=\"\$PATH:/usr/local/bin\"" >> ~/.zshrc && \
     echo "export COMPOSER_ALLOW_SUPERUSER=1" >> ~/.zshrc
 
+RUN useradd -ms /bin/zsh --no-user-group -g www-data -u 1000 laravel
+
 # Criar diretório de trabalho
 WORKDIR /var/www/html
 
@@ -149,13 +150,15 @@ COPY php.ini /etc/php/8.4/fpm/php.ini
 RUN mkdir -p /var/run/php && \
     mkdir -p /var/www/app && \
     mkdir -p /var/www/app/public && \
-    chown -R www-data:www-data /var/www/app/public
+    chown -R laravel:www-data /var/www/app/public
 
 # Configurar Supervisor
+COPY start-container /usr/local/bin/start-container
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+RUN chmod +x /usr/local/bin/start-container
 
 # Expor porta 80
 EXPOSE 80/tcp
 
 # Comando para iniciar serviços
-CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["start-container"]
