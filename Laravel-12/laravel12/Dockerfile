@@ -131,7 +131,7 @@ RUN sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highligh
 RUN echo "export PATH=\"\$PATH:/usr/local/bin\"" >> ~/.zshrc && \
     echo "export COMPOSER_ALLOW_SUPERUSER=1" >> ~/.zshrc
 
-RUN useradd -ms /bin/zsh --no-user-group -g www-data -u 1000 laravel
+RUN useradd -ms /bin/zsh --no-user-group -g www-data -u 1200 laravel
 
 # Criar diretório de trabalho
 WORKDIR /var/www/html
