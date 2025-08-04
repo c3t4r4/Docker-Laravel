@@ -155,15 +155,19 @@ COPY www.conf /etc/php/8.4/fpm/pool.d/www.conf
 RUN mkdir -p /var/run/php && \
     mkdir -p /var/www/app && \
     mkdir -p /var/www/app/public && \
-    chown -R laravel:www-data /var/www/app/public
+    chown -R www-data:www-data /var/www/app/public
 
 # Configurar Supervisor
-COPY start-container /usr/local/bin/start-container
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-RUN chmod +x /usr/local/bin/start-container
+
+# Config User Laravel
+RUN cp -r /root/.oh-my-zsh /home/laravel/.oh-my-zsh \
+&& cp /root/.zshrc /home/laravel/.zshrc \
+&& chown laravel:www-data -R /home/laravel/.oh-my-zsh \
+&& chown laravel:www-data /home/laravel/.zshrc
 
 # Expor porta 80
 EXPOSE 80/tcp
 
 # Comando para iniciar serviços
-CMD ["start-container"]
+CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
