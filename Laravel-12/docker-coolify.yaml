@@ -10,7 +10,7 @@ services:
     #ports:
     #  - "80:80"
     volumes:
-      - spmobile_laravel:/var/www/app
+      - laravel_app:/var/www/app
     depends_on:
       - pgsql
       - redis
@@ -25,7 +25,7 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - spmobile_laravel:/var/www/app
+      - laravel_app:/var/www/app
     depends_on:
       - pgsql
       - redis
@@ -41,7 +41,7 @@ services:
       timeout: 5s
       retries: 3
     volumes:
-      - spmobile_laravel:/var/www/app
+      - laravel_app:/var/www/app
     depends_on:
       - pgsql
       - redis
@@ -63,7 +63,7 @@ services:
       timeout: 20s
       retries: 10
     volumes:
-      - spmobile_postgres:/var/lib/postgresql/data
+      - laravel_postgres:/var/lib/postgresql/data
     command:
       - postgres
       - -c
@@ -78,12 +78,12 @@ services:
       retries: 10
     restart: unless-stopped
     volumes:
-      - spmobile_redis:/data
+      - laravel_redis:/data
 
 volumes:
-  spmobile_laravel:
-    name: spmobile_laravel
-  spmobile_postgres:
-    name: spmobile_postgres
-  spmobile_redis:
-    name: spmobile_redis
+  laravel_app:
+    name: laravel_app
+  laravel_postgres:
+    name: laravel_postgres
+  laravel_redis:
+    name: laravel_redis
