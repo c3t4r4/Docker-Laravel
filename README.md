@@ -41,10 +41,11 @@ Edite app/Providers/AppServiceProvider.php
 ```
 
 ```php
-        if ($this->app->environment('production')) {
-            URL::forceScheme('https');
-            URL::forceRootUrl(config('app.url'));
-        }
+        use Illuminate\Support\Facades\URL;
+        use Illuminate\Support\Facades\Vite;
 
+        if (config('app.env') === 'production' && request()->getHost() !== 'localhost') {
+            URL::forceScheme('https');
+        }
         Vite::prefetch(concurrency: 3);
 ```
