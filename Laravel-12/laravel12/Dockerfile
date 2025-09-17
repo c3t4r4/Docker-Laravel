@@ -120,28 +120,26 @@ RUN curl -fsSL https://deb.nodesource.com/setup_$NODE_VERSION.x | bash - \
 RUN apt clean \
 && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Configurar ZSH como shell padrão
-RUN chsh -s $(which zsh)
-
-# Customizar Oh My Zsh (opcional)
-RUN sed -i 's/ZSH_THEME="robbyrussell"/ZSH_THEME="gentoo"/' ~/.zshrc
+# Configurar ZSH como shell padrão para root e usuário laravel
+RUN chsh -s $(which zsh) && \
+    chsh -s $(which zsh) $SUPERVISOR_PHP_USER
 
 # Instalar plugins populares do Oh My Zsh (opcional)
 RUN git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && \
     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 
-# Adicionar plugins ao .zshrc
-RUN sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting composer laravel)/' ~/.zshrc
-
-# Configurar ambiente PHP
-RUN echo "export PATH=\"\$PATH:/usr/local/bin\"" >> ~/.zshrc && \
+# Configurar ambiente PHP e Oh My Zsh para root
+RUN sed -i 's/ZSH_THEME="robbyrussell"/ZSH_THEME="gentoo"/' ~/.zshrc && \
+    sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting composer laravel)/' ~/.zshrc && \
+    echo "export PATH=\"\$PATH:/usr/local/bin\"" >> ~/.zshrc && \
     echo "export COMPOSER_ALLOW_SUPERUSER=1" >> ~/.zshrc
 
 # Criar diretório de trabalho
 WORKDIR /var/www/html
 
-# Definir ZSH como shell padrão para o container
+# Definir ZSH como shell padrão para o container e para o comando docker exec
 SHELL ["/bin/zsh", "-c"]
+ENV SHELL=/bin/zsh
 
 # Configurar nginx
 COPY nginx.conf /etc/nginx/sites-available/default
@@ -163,8 +161,13 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # Config User Laravel
 RUN cp -r /root/.oh-my-zsh /home/laravel/.oh-my-zsh \
 && cp /root/.zshrc /home/laravel/.zshrc \
+&& echo 'export SHELL=/bin/zsh' >> /home/laravel/.zshrc \
+&& echo 'if [[ -z "$ZSH_VERSION" ]]; then\n  exec /bin/zsh\nfi' >> /home/laravel/.bashrc \
+&& sed -i 's/ZSH_THEME="robbyrussell"/ZSH_THEME="gentoo"/' /home/laravel/.zshrc \
+&& sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting composer laravel)/' /home/laravel/.zshrc \
 && chown laravel:www-data -R /home/laravel/.oh-my-zsh \
-&& chown laravel:www-data /home/laravel/.zshrc
+&& chown laravel:www-data /home/laravel/.zshrc \
+&& chown laravel:www-data /home/laravel/.bashrc
 
 # Expor porta 80
 EXPOSE 80/tcp
